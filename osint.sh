@@ -77,17 +77,33 @@ process(){
 	done
 	echo "Searching for numbers and ips in the disk image"
 	echo
-	touch $2/$1/results/numbers-ips.txt
-	lines=`strings diskimages/*.fat | grep -Eo '[0-9]{1,1000}' |uniq | wc -l`
-	echo "Found" $lines "possible decimal numbers" > $2/$1/results/numbers-ips.txt
-	strings diskimages/*.fat | grep -Eo '[0-9]{1,1000}' |uniq >> $2/$1/results/numbers-ips.txt
-	lines=`strings diskimages/*.fat | grep -Eo '[0-9]{12}' |uniq | wc -l`
-	echo "Found" $lines "possible decimal numbers of 12 digit [malformed ips]" >> $2/$1/results/numbers-ips.txt
-	strings diskimages/*.fat | grep -Eo '[0-9]{12}' |uniq >> $2/$1/results/numbers-ips.txt
+
+	touch $2/$1/results/numbers.txt
+	lines=`strings diskimages/*.fat | grep -Eo '[0-9]{1,1000}' |sort -u | wc -l`
+	echo "Found" $lines "possible decimal numbers" > $2/$1/results/numbers.txt
+	strings diskimages/*.fat | grep -Eo '[0-9]{1,1000}' |sort -u >> $2/$1/results/numbers.txt
+
+	touch $2/$1/results/pins.txt
+	lines=`strings diskimages/*.fat | grep -Eo '[0-9]{4,5}' |sort -u | wc -l`
+	echo "Found" $lines "possible SIM PIN" > $2/$1/results/pins.txt
+	strings diskimages/*.fat | grep -Eo '[0-9]{4}' |sort -u >> $2/$1/results/pins.txt
+
+	touch $2/$1/results/malformed-ips.txt
+	lines=`strings diskimages/*.fat | grep -Eo '[0-9]{4,12}' |sort -u`
+	echo "Found" $lines "possible decimal numbers of 12 digit [malformed ips]" > $2/$1/results/malformed-ips.txt
+	strings diskimages/*.fat | grep -Eo '[0-9]{4,12}' |sort -u >> $2/$1/results/malformed-ips.txt
+
+	touch $2/$1/results/malformed-ips-sanitize.txt
+	echo "Sanitizing the malformed ip list" > $2/$1/results/malformed-ips-sanitize.txt
+	tail -n +2 results/malformed-ips.txt | sed 's/.\{3\}/& /g' | sed -e "s/ /./g"  >> $2/$1/results/malformed-ips-sanitize.txt
+		
 	touch $2/$1/results/ips.txt
-	lines=`strings diskimages/*.fat | grep -E -o "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" | uniq | wc -l`
+	linesfat=`strings diskimages/*.fat | grep -E -o "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" | sort -u | wc -l`
+	linessanitize=`tail -n +2 $2/$1/results/malformed-ips-sanitize.txt | wc -l`
+	lines=`expr $linesfat + $linessanitize`
 	echo "Found" $lines "ips" >> $2/$1/results/ips.txt
-	strings diskimages/*.fat | grep -E -o "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" | uniq >> $2/$1/results/ips.txt
+	strings diskimages/*.fat | grep -E -o "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" | sort -u >> $2/$1/results/ips.txt
+	 tail -n +2  $2/$1/results/malformed-ips-sanitize.txt | grep -E -o "(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)" >> $2/$1/results/ips.txt
 	
 }
 
